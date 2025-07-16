@@ -2,7 +2,7 @@
 <html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lifewood - Code of Tomorrow</title>
     
     <!-- Tailwind CSS via CDN -->
@@ -35,16 +35,11 @@
             height: 100%;
             z-index: -1;
         }
-        .expandable-content {
-            transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-        }
-        .expandable-content.open {
-            max-height: 5000px;
-            opacity: 1;
-        }
+        /* 
+          MODIFICATION 1: 
+          Removed the old, problematic .expandable-content styles.
+          The new animation logic is handled directly with Tailwind classes in the JSX.
+        */
         .opening-screen {
             position: fixed;
             top: 0;
@@ -142,15 +137,14 @@
                 const sketch = (p) => {
                     let particles = [];
                     let mouseTrail = [];
-                    const particleCount = p.windowWidth < 640 ? 20 : p.windowWidth < 1024 ? 40 : 80;
-
+                    
                     class Particle {
                         constructor(x, y, isMouseParticle = false) {
                             this.pos = p.createVector(x, y);
                             this.vel = p.createVector(p.random(-0.3, 0.3), p.random(-0.3, 0.3));
                             this.isMouseParticle = isMouseParticle;
                             this.lifespan = isMouseParticle ? 80 : Infinity;
-                            this.size = p.windowWidth < 640 ? p.random(1, 3) : p.random(2, 5);
+                            this.size = p.width < 640 ? p.random(1, 3) : p.random(2, 5);
                             this.pulseOffset = p.random(p.TWO_PI);
                         }
 
@@ -162,7 +156,7 @@
 
                         display() {
                             const pulse = p.sin(p.frameCount * 0.03 + this.pulseOffset);
-                            const currentSize = this.size + pulse * (p.windowWidth < 640 ? 0.8 : 1.5);
+                            const currentSize = this.size + pulse * (p.width < 640 ? 0.8 : 1.5);
                             const alpha = this.isMouseParticle ? p.map(this.lifespan, 0, 80, 0, 200) : 180;
                             
                             p.noStroke();
@@ -177,7 +171,8 @@
                     }
 
                     p.setup = () => {
-                        p.createCanvas(p.windowWidth, p.windowHeight).parent(canvasRef.current);
+                        p.createCanvas(canvasRef.current.offsetWidth, canvasRef.current.offsetHeight).parent(canvasRef.current);
+                        const particleCount = p.width < 640 ? 20 : p.width < 1024 ? 40 : 80;
                         for (let i = 0; i < particleCount; i++) {
                             particles.push(new Particle(p.random(p.width), p.random(p.height)));
                         }
@@ -185,7 +180,6 @@
 
                     p.draw = () => {
                         p.clear();
-                        
                         const allParticles = [...particles, ...mouseTrail];
 
                         for (let i = 0; i < allParticles.length; i++) {
@@ -194,31 +188,32 @@
 
                             for (let j = i + 1; j < allParticles.length; j++) {
                                 let d = p.dist(allParticles[i].pos.x, allParticles[i].pos.y, allParticles[j].pos.x, allParticles[j].pos.y);
-                                if (d < (p.windowWidth < 640 ? 80 : 120)) {
-                                    const alpha = p.map(d, 0, (p.windowWidth < 640 ? 80 : 120), 120, 0);
+                                if (d < (p.width < 640 ? 80 : 120)) {
+                                    const alpha = p.map(d, 0, (p.width < 640 ? 80 : 120), 120, 0);
                                     p.stroke(27, 94, 32, alpha);
                                     p.line(allParticles[i].pos.x, allParticles[i].pos.y, allParticles[j].pos.x, allParticles[j].pos.y);
                                 }
                             }
                         }
-                        
                         mouseTrail = mouseTrail.filter(p => p.lifespan > 0);
                     };
 
                     p.touchMoved = () => {
                         if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
                             mouseTrail.push(new Particle(p.mouseX, p.mouseY, true));
-                            return false; // Prevent default scrolling
                         }
+                        return true;
                     };
 
                     p.windowResized = () => {
-                        p.resizeCanvas(p.windowWidth, p.windowHeight);
+                        p.resizeCanvas(canvasRef.current.offsetWidth, canvasRef.current.offsetHeight);
                     };
                 };
 
-                let myp5 = new p5(sketch);
-                return () => myp5.remove();
+                if (canvasRef.current) {
+                    let myp5 = new p5(sketch);
+                    return () => myp5.remove();
+                }
             }, []);
 
             return <div id="p5-canvas-container" ref={canvasRef}></div>;
@@ -357,44 +352,51 @@
                         >
                             {isExpanded ? 'Show Less' : 'Learn More'}
                         </button>
-                        <div className={`expandable-content ${isExpanded ? 'open' : ''} mt-6 sm:mt-8`}>
-                            <div className="space-y-6 sm:space-y-8">
-                                <p className="text-base sm:text-lg md:text-xl max-w-2xl sm:max-w-3xl mx-auto">
-                                    Established in 2004, Lifewood is a well-regarded leader in delivering AI data solutions and services.
-                                </p>
-                                <p className="text-base sm:text-lg md:text-xl max-w-2xl sm:max-w-3xl mx-auto">
-                                    Although driven by business and economic goals, we stay true to our core values that guide both our corporate and personal conduct globally.
-                                </p>
-                                <p className="text-2xl sm:text-3xl md:text-4xl font-alimama-bold">WE VALUE</p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
-                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                        <h3 className="text-xl sm:text-2xl font-alimama-bold text-lifewood-earth-yellow">DIVERSITY</h3>
-                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                            We embrace diverse beliefs, religions, philosophies, and lifestyles, recognizing that they offer unique perspectives and ideas that inspire progress for all.
-                                        </p>
+                        {/* 
+                          MODIFICATION 2: 
+                          Replaced the old div with a new grid-based animated container.
+                          This smoothly animates the height from 0 to the content's natural height.
+                        */}
+                        <div className={`grid transition-[grid-template-rows] duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                            <div className="overflow-hidden">
+                                <div className="mt-6 sm:mt-8 space-y-6 sm:space-y-8">
+                                    <p className="text-base sm:text-lg md:text-xl max-w-2xl sm:max-w-3xl mx-auto">
+                                        Established in 2004, Lifewood is a well-regarded leader in delivering AI data solutions and services.
+                                    </p>
+                                    <p className="text-base sm:text-lg md:text-xl max-w-2xl sm:max-w-3xl mx-auto">
+                                        Although driven by business and economic goals, we stay true to our core values that guide both our corporate and personal conduct globally.
+                                    </p>
+                                    <p className="text-2xl sm:text-3xl md:text-4xl font-alimama-bold">WE VALUE</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
+                                        <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                            <h3 className="text-xl sm:text-2xl font-alimama-bold text-lifewood-earth-yellow">DIVERSITY</h3>
+                                            <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                                We embrace diverse beliefs, religions, philosophies, and lifestyles, recognizing that they offer unique perspectives and ideas that inspire progress for all.
+                                            </p>
+                                        </div>
+                                        <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                            <h3 className="text-xl sm:text-2xl font-alimama-bold text-lifewood-earth-yellow">INNOVATION</h3>
+                                            <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                                Innovation drives everything we do, enhancing our lives and pushing us to constantly grow and elevate the quality of our service.
+                                            </p>
+                                        </div>
+                                        <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                            <h3 className="text-xl sm:text-2xl font-alimama-bold text-lifewood-earth-yellow">CARING</h3>
+                                            <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                                We value every individual with genuine and equal care, believing that without compassion, work loses its true purpose.
+                                            </p>
+                                        </div>
+                                        <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                            <h3 className="text-xl sm:text-2xl font-alimama-bold text-lifewood-earth-yellow">INTEGRITY</h3>
+                                            <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                                We are committed to acting with integrity and sustainability in all that we do. It’s more than a requirement—it’s the foundation of our identity as a company.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                        <h3 className="text-xl sm:text-2xl font-alimama-bold text-lifewood-earth-yellow">INNOVATION</h3>
-                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                            Innovation drives everything we do, enhancing our lives and pushing us to constantly grow and elevate the quality of our service.
-                                        </p>
-                                    </div>
-                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                        <h3 className="text-xl sm:text-2xl font-alimama-bold text-lifewood-earth-yellow">CARING</h3>
-                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                            We value every individual with genuine and equal care, believing that without compassion, work loses its true purpose.
-                                        </p>
-                                    </div>
-                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                        <h3 className="text-xl sm:text-2xl font-alimama-bold text-lifewood-earth-yellow">INTEGRITY</h3>
-                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                            We are committed to acting with integrity and sustainability in all that we do. It’s more than a requirement—it’s the foundation of our identity as a company.
-                                        </p>
-                                    </div>
+                                    <p className="text-base sm:text-lg md:text-xl max-w-2xl sm:max-w-3xl mx-auto">
+                                        At Lifewood, we collaborate with thousands of individuals in areas commonly referred to as ‘developing economies,’ and we recognize the opportunity to make a meaningful impact. We create jobs that offer transformative wages and deliver high-quality training in technology and digital skills—equipping people with world-class capabilities and helping them become key providers for their families.
+                                    </p>
                                 </div>
-                                <p className="text-base sm:text-lg md:text-xl max-w-2xl sm:max-w-3xl mx-auto">
-                                    At Lifewood, we collaborate with thousands of individuals in areas commonly referred to as ‘developing economies,’ and we recognize the opportunity to make a meaningful impact. We create jobs that offer transformative wages and deliver high-quality training in technology and digital skills—equipping people with world-class capabilities and helping them become key providers for their families.
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -420,56 +422,62 @@
                         >
                             {isExpanded ? 'Show Less' : 'Learn More'}
                         </button>
-                        <div className={`expandable-content ${isExpanded ? 'open' : ''} mt-6 sm:mt-8`}>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                                <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                    <img src="AI data extraction.png" alt="AI Data Extraction" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
-                                    <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">AI DATA EXTRACTION</h3>
-                                    <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                        Through AI, we enhance the collection of images and text from various sources. Our methods range from onsite scanning and drone photography to collaborating with archives and forming partnerships with corporations, religious institutions, and governments.
-                                    </p>
-                                </div>
-                                <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                    <img src="Machine learning.png" alt="Machine Learning Enablement" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
-                                    <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">MACHINE LEARNING ENABLEMENT</h3>
-                                    <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                        From simple data to deep learning, our data solutions are highly flexible and can enable a wide variety of ML systems, no matter how complex the model.
-                                    </p>
-                                </div>
-                                <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                    <img src="genealogy1.png" alt="Genealogy" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
-                                    <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">GENEALOGY</h3>
-                                    <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                        Driven by AI, Lifewood efficiently processes genealogical content at scale, preserving and uncovering family histories, national archives, corporate records, and registers—regardless of language, age, or condition.
-                                    </p>
-                                </div>
-                                <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                    <img src="natural language.png" alt="Natural Language Processing" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
-                                    <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">NATURAL LANGUAGE PROCESSING</h3>
-                                    <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                        We collaborate with leading global companies in natural language processing (NLP) development, delivering solutions in more than 50 languages through our globally managed workforce.
-                                    </p>
-                                </div>
-                                <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                    <img src="AI enabled.png" alt="AI-Enabled Customer Service" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
-                                    <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">AI-ENABLED CUSTOMER SERVICE</h3>
-                                    <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                        AI-enabled customer service is now the quickest and most effective route for institutions to deliver personalized, proactive experiences that drive customer engagement.
-                                    </p>
-                                </div>
-                                <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                    <img src="computer vision.png" alt="Computer Vision" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
-                                    <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">COMPUTER VISION</h3>
-                                    <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                        Training AI to see and understand the world requires a high volume of quality training data. Lifewood provides total data solutions for your CV development from collection to annotation to classification and more, for video and image datasets.
-                                    </p>
-                                </div>
-                                <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-                                    <img src="autonomous driving.png" alt="Autonomous Driving Technology" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
-                                    <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">AUTONOMOUS DRIVING TECHNOLOGY</h3>
-                                    <p className="mt-2 sm:mt-4 text-sm sm:text-base">
-                                        At Lifewood, innovation is our constant driving force—particularly evident in our active role in advancing Autonomous Driving Technology.
-                                    </p>
+                        {/* 
+                          MODIFICATION 3: 
+                          Applied the same robust grid animation here.
+                        */}
+                        <div className={`grid transition-[grid-template-rows] duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                           <div className="overflow-hidden">
+                                <div className="mt-6 sm:mt-8 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4 sm:gap-6">
+                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                        <img src="AI data extraction.png" alt="AI Data Extraction" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
+                                        <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">AI DATA EXTRACTION</h3>
+                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                            Through AI, we enhance the collection of images and text from various sources. Our methods range from onsite scanning and drone photography to collaborating with archives and forming partnerships with corporations, religious institutions, and governments.
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                        <img src="Machine learning.png" alt="Machine Learning Enablement" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
+                                        <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">MACHINE LEARNING ENABLEMENT</h3>
+                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                            From simple data to deep learning, our data solutions are highly flexible and can enable a wide variety of ML systems, no matter how complex the model.
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                        <img src="genealogy1.png" alt="Genealogy" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
+                                        <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">GENEALOGY</h3>
+                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                            Driven by AI, Lifewood efficiently processes genealogical content at scale, preserving and uncovering family histories, national archives, corporate records, and registers—regardless of language, age, or condition.
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                        <img src="natural language.png" alt="Natural Language Processing" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
+                                        <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">NATURAL LANGUAGE PROCESSING</h3>
+                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                            We collaborate with leading global companies in natural language processing (NLP) development, delivering solutions in more than 50 languages through our globally managed workforce.
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                        <img src="AI enabled.png" alt="AI-Enabled Customer Service" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
+                                        <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">AI-ENABLED CUSTOMER SERVICE</h3>
+                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                            AI-enabled customer service is now the quickest and most effective route for institutions to deliver personalized, proactive experiences that drive customer engagement.
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                        <img src="computer vision.png" alt="Computer Vision" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
+                                        <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">COMPUTER VISION</h3>
+                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                            Training AI to see and understand the world requires a high volume of quality training data. Lifewood provides total data solutions for your CV development from collection to annotation to classification and more, for video and image datasets.
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
+                                        <img src="autonomous driving.png" alt="Autonomous Driving Technology" className="w-full h-32 sm:h-48 object-cover rounded-t-lg mb-3 sm:mb-4" loading="lazy" />
+                                        <h3 className="text-lg sm:text-xl font-alimama-bold text-lifewood-earth-yellow">AUTONOMOUS DRIVING TECHNOLOGY</h3>
+                                        <p className="mt-2 sm:mt-4 text-sm sm:text-base">
+                                            At Lifewood, innovation is our constant driving force—particularly evident in our active role in advancing Autonomous Driving Technology.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -617,4 +625,4 @@
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
-</html>
+</html>```
