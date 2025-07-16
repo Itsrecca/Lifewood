@@ -35,11 +35,6 @@
             height: 100%;
             z-index: -1;
         }
-        /* 
-          MODIFICATION 1: 
-          Removed the old, problematic .expandable-content styles.
-          The new animation logic is handled directly with Tailwind classes in the JSX.
-        */
         .opening-screen {
             position: fixed;
             top: 0;
@@ -198,11 +193,24 @@
                         mouseTrail = mouseTrail.filter(p => p.lifespan > 0);
                     };
 
+                    // This handles the particle trail on mobile (touch)
                     p.touchMoved = () => {
                         if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
                             mouseTrail.push(new Particle(p.mouseX, p.mouseY, true));
                         }
                         return true;
+                    };
+                    
+                    /*
+                      MODIFICATION:
+                      Added this p.mouseMoved function. This listens for mouse movement on desktop browsers
+                      and creates the particle trail, just like touchMoved does for mobile.
+                      This makes the animation work for both platforms without breaking either.
+                    */
+                    p.mouseMoved = () => {
+                        if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
+                            mouseTrail.push(new Particle(p.mouseX, p.mouseY, true));
+                        }
                     };
 
                     p.windowResized = () => {
@@ -352,11 +360,6 @@
                         >
                             {isExpanded ? 'Show Less' : 'Learn More'}
                         </button>
-                        {/* 
-                          MODIFICATION 2: 
-                          Replaced the old div with a new grid-based animated container.
-                          This smoothly animates the height from 0 to the content's natural height.
-                        */}
                         <div className={`grid transition-[grid-template-rows] duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                             <div className="overflow-hidden">
                                 <div className="mt-6 sm:mt-8 space-y-6 sm:space-y-8">
@@ -422,10 +425,6 @@
                         >
                             {isExpanded ? 'Show Less' : 'Learn More'}
                         </button>
-                        {/* 
-                          MODIFICATION 3: 
-                          Applied the same robust grid animation here.
-                        */}
                         <div className={`grid transition-[grid-template-rows] duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                            <div className="overflow-hidden">
                                 <div className="mt-6 sm:mt-8 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4 sm:gap-6">
@@ -625,4 +624,4 @@
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
-</html>```
+</html>
