@@ -16,14 +16,24 @@
     <!-- p5.js via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/p5@1.4.1/lib/p5.js"></script>
 
-    <!-- Google Fonts for Chinese Typography -->
+    <!-- MODIFIED: Replaced old fonts with Manrope -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+
 
     <style>
-        .font-alimama-regular { font-family: 'ZCOOL XiaoWei', serif; }
-        .font-alimama-bold { font-family: 'ZCOOL QingKe HuangYou', cursive; letter-spacing: 0.05rem; }
+        /* MODIFIED: Set the base font for the entire site to Manrope */
+        body { 
+            font-family: 'Manrope', sans-serif; 
+        }
+
+        /* MODIFIED: Remapped old font classes to Manrope for consistency.
+           You can now remove these if you update the classes in the JSX,
+           but this way ensures nothing breaks. */
+        .font-alimama-regular { font-family: 'Manrope', sans-serif; font-weight: 400; }
+        .font-alimama-bold { font-family: 'Manrope', sans-serif; font-weight: 700; }
+
         .text-shadow-dark-green {
             text-shadow: 1px 1px 2px #1B5E20;
         }
@@ -60,12 +70,37 @@
         .opening-content.zoom {
             transform: scale(3);
         }
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #1a202c; /* bg-gray-900 */
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            max-width: 90%;
+            width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
         @media (max-width: 640px) {
             .text-6xl { font-size: 2.5rem; }
             .text-4xl { font-size: 1.75rem; }
             .text-2xl { font-size: 1.25rem; }
             .text-xl { font-size: 1rem; }
             .text-lg { font-size: 0.9rem; }
+            .modal-content {
+                width: 95%;
+                padding: 1rem;
+            }
         }
     </style>
 
@@ -79,9 +114,11 @@
                         'lifewood-earth-yellow': '#FFC107',
                         'lifewood-dark': '#133020',
                     },
+                    /* MODIFIED: Changed font families to Manrope */
                     fontFamily: {
-                        'alimama-regular': ['ZCOOL XiaoWei', 'serif'],
-                        'alimama-bold': ['ZCOOL QingKe HuangYou', 'cursive'],
+                        'sans': ['Manrope', 'sans-serif'], // Added Manrope as default sans-serif
+                        'alimama-regular': ['Manrope', 'sans-serif'],
+                        'alimama-bold': ['Manrope', 'sans-serif'],
                     },
                     screens: {
                         'xs': '480px',
@@ -98,7 +135,123 @@
 <body class="bg-lifewood-dark">
     <div id="root"></div>
 
+    <!-- FIREBASE SDKs -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+        // PASTE YOUR FIREBASE CONFIG OBJECT HERE
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyBaEPb1rYlIkq7MH732RA1FW5CH_Px0Aaw",
+            authDomain: "lifewood-careers-de112.firebaseapp.com",
+            projectId: "lifewood-careers-de112",
+            storageBucket: "lifewood-careers-de112.firebasestorage.app",
+            messagingSenderId: "1037659487257",
+            appId: "1:1037659487257:web:0f3e2e97496327579afe88",
+            measurementId: "G-L3V2NRK2FL"
+        };
+        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Make the database 'addDoc' function globally available to React
+        window.submitApplicationToFirestore = async (formData) => {
+            try {
+                const docRef = await addDoc(collection(db, "jobApplications"), {
+                    ...formData,
+                    status: 'pending', // Set initial status
+                    submittedAt: new Date() // Add a timestamp
+                });
+                console.log("Document written with ID: ", docRef.id);
+                return true; // Indicate success
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                return false; // Indicate failure
+            }
+        };
+    </script>
+
     <script type="text/babel">
+        // All React components from here down remain the same.
+        // The font changes will apply automatically because we updated the CSS classes they use.
+        const JobApplicationModal = ({ onClose, onSubmit }) => {
+            const handleSubmit = (event) => {
+                event.preventDefault();
+                const formData = new FormData(event.target);
+                const data = Object.fromEntries(formData.entries());
+                onSubmit(data);
+            };
+
+            return (
+                <div className="modal-backdrop">
+                    <div className="modal-content text-white font-alimama-regular">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl sm:text-2xl font-alimama-bold text-lifewood-earth-yellow">Job Application</h2>
+                            <button onClick={onClose} className="text-gray-300 hover:text-white">&times;</button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label htmlFor="firstName" className="block text-sm font-medium">First Name</label>
+                                    <input type="text" id="firstName" name="firstName" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                                </div>
+                                <div>
+                                    <label htmlFor="lastName" className="block text-sm font-medium">Last Name</label>
+                                    <input type="text" id="lastName" name="lastName" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium">Email</label>
+                                <input type="email" id="email" name="email" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                            </div>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label htmlFor="age" className="block text-sm font-medium">Age</label>
+                                    <input type="number" id="age" name="age" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                                </div>
+                                <div>
+                                    <label htmlFor="degree" className="block text-sm font-medium">Degree</label>
+                                    <input type="text" id="degree" name="degree" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="projectAppliedFor" className="block text-sm font-medium">Project Applied for</label>
+                                <input type="text" id="projectAppliedFor" name="projectAppliedFor" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                            </div>
+                            <div>
+                                <label htmlFor="jobExperience" className="block text-sm font-medium">Relevant Job Experience</label>
+                                <textarea id="jobExperience" name="jobExperience" rows="3" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow"></textarea>
+                            </div>
+                            <div>
+                                <label htmlFor="resumeLink" className="block text-sm font-medium">Resume Link (Google Drive, LinkedIn, etc.)</label>
+                                <input type="url" id="resumeLink" name="resumeLink" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label htmlFor="startTime" className="block text-sm font-medium">Start of Available Time</label>
+                                    <input type="time" id="startTime" name="startTime" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                                </div>
+                                <div>
+                                    <label htmlFor="endTime" className="block text-sm font-medium">End of Available Time</label>
+                                    <input type="time" id="endTime" name="endTime" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                                </div>
+                            </div>
+                            <div className="pt-4">
+                                <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-bold text-lifewood-dark bg-lifewood-earth-yellow hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lifewood-saffron">
+                                    Submit Application
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+        
         const useScrollSpy = (ids) => {
             const [activeId, setActiveId] = React.useState(ids[0]);
 
@@ -193,7 +346,6 @@
                         mouseTrail = mouseTrail.filter(p => p.lifespan > 0);
                     };
 
-                    // This handles the particle trail on mobile (touch)
                     p.touchMoved = () => {
                         if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
                             mouseTrail.push(new Particle(p.mouseX, p.mouseY, true));
@@ -201,12 +353,6 @@
                         return true;
                     };
                     
-                    /*
-                      MODIFICATION:
-                      Added this p.mouseMoved function. This listens for mouse movement on desktop browsers
-                      and creates the particle trail, just like touchMoved does for mobile.
-                      This makes the animation work for both platforms without breaking either.
-                    */
                     p.mouseMoved = () => {
                         if (p.mouseX > 0 && p.mouseX < p.width && p.mouseY > 0 && p.mouseY < p.height) {
                             mouseTrail.push(new Particle(p.mouseX, p.mouseY, true));
@@ -276,7 +422,7 @@
             );
         };
 
-        const Header = ({ activeSection }) => {
+        const Header = ({ activeSection, onApplyNowClick }) => {
             const [isMenuOpen, setIsMenuOpen] = React.useState(false);
             const navLinks = [
                 { id: 'home', name: 'Home' },
@@ -303,15 +449,34 @@
                 </a>
             );
 
+            const ActionButtons = () => (
+                 <div className="flex items-center space-x-2">
+                    <button
+                        onClick={() => { onApplyNowClick(); setIsMenuOpen(false); }}
+                        className="py-2 px-3 rounded-md text-base font-bold text-lifewood-dark bg-lifewood-earth-yellow hover:opacity-90 transition-opacity"
+                    >
+                        Apply Now
+                    </button>
+                    <a 
+                        href="admin.html"
+                        target="_blank"
+                        className="py-2 px-3 rounded-md text-base font-bold text-white bg-gray-700 hover:bg-gray-600 transition-colors"
+                    >
+                        Admin
+                    </a>
+                </div>
+            );
+
             return (
                 <header className="fixed top-0 left-0 w-full bg-lifewood-green bg-opacity-95 backdrop-blur-sm z-40 shadow-md">
                     <nav className="container mx-auto px-4 sm:px-6">
                         <div className="flex items-center justify-between h-16 sm:h-20">
                             <div className="flex-shrink-0">
-                                <LifewoodLogo color="white" />
+                                <a href="#home"><LifewoodLogo color="white" /></a>
                             </div>
                             <div className="hidden md:flex items-center space-x-2 xl:space-x-4">
                                 {navLinks.map(link => <NavLink key={link.id} {...link} />)}
+                                <ActionButtons />
                             </div>
                             <div className="md:hidden flex items-center">
                                 <button onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu" className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
@@ -326,6 +491,7 @@
                             <div className="md:hidden pb-4 px-2">
                                 <div className="flex flex-col space-y-2">
                                     {navLinks.map(link => <NavLink key={link.id} {...link} />)}
+                                    <div className="pt-2"><ActionButtons /></div>
                                 </div>
                             </div>
                         )}
@@ -489,13 +655,27 @@
             const sectionIds = ['home', 'services', 'about', 'projects', 'contact'];
             const activeSection = useScrollSpy(sectionIds);
             const [showOpeningScreen, setShowOpeningScreen] = React.useState(true);
+            const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+            // MODIFIED: This function now calls the global Firestore function
+            const handleFormSubmit = async (formData) => {
+                console.log('Submitting to Firestore:', formData);
+                const success = await window.submitApplicationToFirestore(formData);
+                
+                if (success) {
+                    alert('Thank you! Your application has been submitted successfully.');
+                    setIsModalOpen(false); // Close the modal on success
+                } else {
+                    alert('There was an error submitting your application. Please try again.');
+                }
+            };
 
             return (
                 <div className="text-white">
+                    {isModalOpen && <JobApplicationModal onClose={() => setIsModalOpen(false)} onSubmit={handleFormSubmit} />}
                     {showOpeningScreen && <OpeningScreen onEnter={() => setShowOpeningScreen(false)} />}
                     <div className="relative z-10">
-                        <Header activeSection={activeSection} />
-                        
+                        <Header activeSection={activeSection} onApplyNowClick={() => setIsModalOpen(true)} />
                         <main>
                             <section id="home" className="min-h-[80vh] sm:h-screen flex items-center justify-center text-center p-4">
                                 <div className="z-10">
