@@ -177,8 +177,6 @@
     </script>
 
     <script type="text/babel">
-        // All React components from here down remain the same.
-        // The font changes will apply automatically because we updated the CSS classes they use.
         const JobApplicationModal = ({ onClose, onSubmit }) => {
             const handleSubmit = (event) => {
                 event.preventDefault();
@@ -214,19 +212,67 @@
                                     <label htmlFor="age" className="block text-sm font-medium">Age</label>
                                     <input type="number" id="age" name="age" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
                                 </div>
+                                {/* === MODIFIED DEGREE SECTION START === */}
                                 <div>
                                     <label htmlFor="degree" className="block text-sm font-medium">Degree</label>
-                                    <input type="text" id="degree" name="degree" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                                    <select 
+                                        id="degree" 
+                                        name="degree" 
+                                        required 
+                                        className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow"
+                                    >
+                                        <option value="" disabled selected>Select your degree...</option>
+                                        <option value="Associate's Degree">Associate's Degree</option>
+                                        <option value="Bachelor's Degree">Bachelor's Degree</option>
+                                        <option value="Master's Degree">Master's Degree</option>
+                                        <option value="Doctoral Degree (Ph.D.)">Doctoral Degree (Ph.D.)</option>
+                                        <option value="Integrated Degrees">Integrated Degrees</option>
+                                    </select>
                                 </div>
+                                {/* === MODIFIED DEGREE SECTION END === */}
                             </div>
                             <div>
                                 <label htmlFor="projectAppliedFor" className="block text-sm font-medium">Project Applied for</label>
-                                <input type="text" id="projectAppliedFor" name="projectAppliedFor" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
+                                <select
+                                    id="projectAppliedFor"
+                                    name="projectAppliedFor"
+                                    required
+                                    className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow"
+                                >
+                                    <option value="" disabled selected>Select a project...</option>
+                                    <option value="AI DATA EXTRACTION">AI DATA EXTRACTION</option>
+                                    <option value="MACHINE LEARNING ENABLEMENT">MACHINE LEARNING ENABLEMENT</option>
+                                    <option value="GENEALOGY">GENEALOGY</option>
+                                    <option value="NATURAL LANGUAGE PROCESSING">NATURAL LANGUAGE PROCESSING</option>
+                                    <option value="AI-ENABLED CUSTOMER SERVICE">AI-ENABLED CUSTOMER SERVICE</option>
+                                    <option value="COMPUTER VISION">COMPUTER VISION</option>
+                                    <option value="AUTONOMOUS DRIVING TECHNOLOGY">AUTONOMOUS DRIVING TECHNOLOGY</option>
+                                </select>
                             </div>
+                             {/* === MODIFIED JOB EXPERIENCE SECTION START === */}
                             <div>
                                 <label htmlFor="jobExperience" className="block text-sm font-medium">Relevant Job Experience</label>
-                                <textarea id="jobExperience" name="jobExperience" rows="3" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow"></textarea>
+                                <select 
+                                    id="jobExperience" 
+                                    name="jobExperience" 
+                                    required 
+                                    className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow"
+                                >
+                                    <option value="" disabled selected>Select most relevant experience...</option>
+                                    <option value="Web Developer">Web Developer</option>
+                                    <option value="Information Security Analyst">Information Security Analyst</option>
+                                    <option value="Database Administrator">Database Administrator</option>
+                                    <option value="Computer Systems Analyst">Computer Systems Analyst</option>
+                                    <option value="Network administrator">Network administrator</option>
+                                    <option value="User experience design">User experience design</option>
+                                    <option value="Programmer">Programmer</option>
+                                    <option value="Software developer">Software developer</option>
+                                    <option value="Computer hardware engineer">Computer hardware engineer</option>
+                                    <option value="Cloud Engineer">Cloud Engineer</option>
+                                    <option value="Data analysis">Data analysis</option>
+                                </select>
                             </div>
+                            {/* === MODIFIED JOB EXPERIENCE SECTION END === */}
                             <div>
                                 <label htmlFor="resumeLink" className="block text-sm font-medium">Resume Link (Google Drive, LinkedIn, etc.)</label>
                                 <input type="url" id="resumeLink" name="resumeLink" required className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-lifewood-earth-yellow focus:border-lifewood-earth-yellow" />
@@ -657,7 +703,6 @@
             const [showOpeningScreen, setShowOpeningScreen] = React.useState(true);
             const [isModalOpen, setIsModalOpen] = React.useState(false);
 
-            // MODIFIED: This function now calls the global Firestore function
             const handleFormSubmit = async (formData) => {
                 console.log('Submitting to Firestore:', formData);
                 const success = await window.submitApplicationToFirestore(formData);
